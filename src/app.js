@@ -7,7 +7,8 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
     res.json({
-        message: "Git Lab 2 REST API"
+        message: "Git Lab 2 REST API",
+        version: "1.0.0"
     });
 });
 
