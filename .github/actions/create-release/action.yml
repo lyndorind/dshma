@@ -1,0 +1,41 @@
+name: "Create Tag and Release"
+description: "Creates a Git tag and GitHub Release"
+
+inputs:
+  version:
+    description: "Release version without v prefix"
+    required: true
+
+  release-notes:
+    description: "Release notes"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Create and push tag
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        TAG="v${VERSION}"
+
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git tag "$TAG"
+        git push origin "$TAG"
+
+    - name: Create GitHub Release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        VERSION: ${{ inputs.version }}
+        RELEASE_NOTES: ${{ inputs.release-notes }}
+      run: |
+        TAG="v${VERSION}"
+
+        gh release create "$TAG" \
+          --title "$TAG" \
+          --notes "$RELEASE_NOTES"
