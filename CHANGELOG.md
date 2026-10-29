@@ -18,3 +18,9 @@ All notable changes to this project will be documented in this file.
 - Health endpoint.
 - README documentation.
 - Git configuration and signed commits.
+
+## [1.1.0] - 2026-10-29
+
+### Added
+
+- Added `/version` endpoint that returns the current application version.

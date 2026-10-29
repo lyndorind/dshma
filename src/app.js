@@ -23,3 +23,9 @@ app.get("/health", (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+app.get("/version", (req, res) => {
+    res.json({
+        version: require("../package.json").version
+    });
+});
