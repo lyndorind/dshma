@@ -1,0 +1,50 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+
+jobs:
+  build-package:
+    name: build-package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: |
+          mkdir -p dist
+          npm pack --pack-destination dist
+
+      - name: Generate SHA-256 checksum
+        run: |
+          sha256sum dist/*.tgz > dist/SHA256SUMS.txt
+          cat dist/SHA256SUMS.txt
+
+      - name: Upload package and checksum
+        uses: actions/upload-artifact@v7
+        with:
+          name: package-and-sha256
+          path: |
+            dist/*.tgz
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
