@@ -14,3 +14,5 @@ Install dependencies:
 
 ```bash
 npm install
+
+CI build workflow test.
