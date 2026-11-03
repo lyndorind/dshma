@@ -1,3 +1,6 @@
 node_modules/
 .env
 *.logcoverage/
+
+allure-results/
+allure-report/
