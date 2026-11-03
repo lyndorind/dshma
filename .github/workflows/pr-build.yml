@@ -33,6 +33,17 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Run tests with coverage
+        run: npm run coverage
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          slug: lyndorind/dshma
+          fail_ci_if_error: true
+
       - name: Build package
         run: |
           mkdir -p dist
