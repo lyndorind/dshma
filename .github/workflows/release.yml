@@ -46,7 +46,22 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version: $VERSION"
 
+      - name: Check if tag already exists
+        id: tag_check
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse "refs/tags/v${VERSION}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag v${VERSION} already exists. Release creation will be skipped."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Tag v${VERSION} does not exist."
+          fi
+
       - name: Read release notes from CHANGELOG
+        if: steps.tag_check.outputs.exists == 'false'
         id: changelog
         shell: bash
         env:
@@ -70,22 +85,26 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build package
+        if: steps.tag_check.outputs.exists == 'false'
         run: |
           mkdir -p dist
           npm pack --pack-destination dist
 
       - name: Generate SHA-256 checksum
+        if: steps.tag_check.outputs.exists == 'false'
         run: |
           sha256sum dist/*.tgz > dist/SHA256SUMS.txt
           cat dist/SHA256SUMS.txt
 
       - name: Create tag and GitHub Release
+        if: steps.tag_check.outputs.exists == 'false'
         uses: ./.github/actions/create-release
         with:
           version: ${{ steps.version.outputs.version }}
           release-notes: ${{ steps.changelog.outputs.notes }}
 
       - name: Upload assets to GitHub Release
+        if: steps.tag_check.outputs.exists == 'false'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
