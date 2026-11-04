@@ -20,11 +20,13 @@ app.get("/health", (req, res) => {
     });
 });
 
+/* c8 ignore start */
 if (require.main === module) {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
 }
+/* c8 ignore stop */
 
 module.exports = app;
 
