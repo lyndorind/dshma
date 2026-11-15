@@ -54,8 +54,13 @@ jobs:
           jq 'walk(
             if type == "object"
             and has("security-severity")
-            and .["security-severity"] == null
-            then del(.["security-severity"])
+            and (
+              .["security-severity"] == null
+              or .["security-severity"] == "null"
+              or .["security-severity"] == "undefined"
+              or .["security-severity"] == ""
+            )
+            then .["security-severity"] = "0"
             else .
             end
           )' snyk.sarif > snyk-fixed.sarif
