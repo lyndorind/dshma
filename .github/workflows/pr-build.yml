@@ -62,6 +62,20 @@ jobs:
         with:
           args: --severity-threshold=high
 
+      # ---------------- DOCKER BUILD ----------------
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image for PR
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: dshma:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+
+      # ---------------- PACKAGE BUILD ----------------
+
       - name: Build package
         run: |
           mkdir -p dist
