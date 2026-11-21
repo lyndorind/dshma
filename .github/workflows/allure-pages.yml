@@ -12,12 +12,9 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build:
+    name: build-allure-report
     runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -46,6 +43,20 @@ jobs:
         with:
           path: ./allure-report
 
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
