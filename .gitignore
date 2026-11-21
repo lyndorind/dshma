@@ -6,3 +6,4 @@ coverage/
 allure-results/
 allure-report/
 reports/
+secrets/*.txt

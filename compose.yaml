@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dshma
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+
+    secrets:
+      - db_password
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dshma"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_NAME: dshma
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      PORT: 3000
+
+    secrets:
+      - db_password
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+secrets:
+  db_password:
+    environment: DB_PASSWORD_SECRET
+
+volumes:
+  postgres_data:
