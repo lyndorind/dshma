@@ -169,3 +169,97 @@ jobs:
           name: postman-integration-report
           path: reports/postman-report.html
           if-no-files-found: warn
+
+  load-test:
+    name: load-test
+    runs-on: ubuntu-latest
+
+    env:
+      DB_PASSWORD_SECRET: postgres
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Start application with Docker Compose
+        run: docker compose up -d --build
+
+      - name: Wait for application
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/health > /dev/null; then
+              echo "Application is ready"
+              docker compose ps
+              exit 0
+            fi
+
+            echo "Waiting for application..."
+            sleep 2
+          done
+
+          echo "Application failed to start"
+          docker compose logs
+          exit 1
+
+      - name: Install Apache JMeter
+        run: |
+          wget -q https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.3.tgz
+          tar -xzf apache-jmeter-5.6.3.tgz
+          ./apache-jmeter-5.6.3/bin/jmeter --version
+
+      - name: Run JMeter load test with container monitoring
+        run: |
+          rm -f jmeter/results.jtl
+          rm -rf jmeter/report
+
+          (
+            while true; do
+              date -u
+              docker stats --no-stream
+              sleep 1
+            done
+          ) > docker-stats.log 2>&1 &
+
+          STATS_PID=$!
+
+          set +e
+          ./apache-jmeter-5.6.3/bin/jmeter \
+            -n \
+            -t jmeter/load-test.jmx \
+            -l jmeter/results.jtl \
+            -e \
+            -o jmeter/report \
+            -Jthreads=10 \
+            -Jloops=20 \
+            -Jramp=5
+
+          JMETER_EXIT=$?
+
+          kill $STATS_PID || true
+          wait $STATS_PID 2>/dev/null || true
+
+          echo "Container resource monitoring:"
+          tail -30 docker-stats.log
+
+          exit $JMETER_EXIT
+
+      - name: Upload JMeter load test report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jmeter-load-test-report
+          path: |
+            jmeter/report/
+            jmeter/results.jtl
+            docker-stats.log
+          if-no-files-found: warn
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose down -v
