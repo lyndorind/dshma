@@ -39,7 +39,7 @@ jobs:
         run: npm run allure:generate
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload Allure report
         uses: actions/upload-pages-artifact@v4
