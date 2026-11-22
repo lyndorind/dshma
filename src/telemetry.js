@@ -18,9 +18,7 @@ const {
 } = require("@opentelemetry/exporter-metrics-otlp-http");
 
 const logExporter = new OTLPLogExporter({
-  url:
-    process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT ||
-    "http://otel-collector:4318/v1/logs",
+  url: process.env.OTEL_EXPORTER_OTLP_LOGS_ENDPOINT,
 });
 
 const {
@@ -28,15 +26,11 @@ const {
 } = require("@opentelemetry/sdk-metrics");
 
 const traceExporter = new OTLPTraceExporter({
-  url:
-    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
-    "http://otel-collector:4318/v1/traces",
+  url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
 });
 
 const metricExporter = new OTLPMetricExporter({
-  url:
-    process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT ||
-    "http://otel-collector:4318/v1/metrics",
+  url: process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT,
 });
 
 const sdk = new NodeSDK({
