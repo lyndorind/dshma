@@ -41,9 +41,92 @@ services:
       postgres:
         condition: service_healthy
 
+  # ---------------- PROMETHEUS ----------------
+
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+
+    ports:
+      - "9090:9090"
+
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  # ---------------- LOKI ----------------
+
+  loki:
+    image: grafana/loki:3.6.22
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+
+    ports:
+      - "3100:3100"
+
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+
+  # ---------------- TEMPO ----------------
+
+  tempo:
+    image: grafana/tempo:3.0.0
+    command:
+      - "-config.file=/etc/tempo/tempo.yml"
+
+    ports:
+      - "3200:3200"
+
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo_data:/var/tempo
+
+  # ---------------- OTEL COLLECTOR ----------------
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.119.0
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+
+    volumes:
+      - ./observability/otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yml:ro
+
+    depends_on:
+      - tempo
+
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8889:8889"
+
+  # ---------------- GRAFANA ----------------
+
+  grafana:
+    image: grafana/grafana:13.3.1
+
+    ports:
+      - "3001:3000"
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+
 secrets:
   db_password:
     environment: DB_PASSWORD_SECRET
 
+
 volumes:
   postgres_data:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  grafana_data:

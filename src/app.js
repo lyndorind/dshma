@@ -1,10 +1,58 @@
+require("./telemetry");
+
 const express = require("express");
 const { pool, initDatabase } = require("./db");
+
+const { metrics, logs } = require("@opentelemetry/api");
+
+const meter = metrics.getMeter("gitlab2-app");
+const logger = logs.getLogger("gitlab2-app");
+
+const requestCounter = meter.createCounter("http_requests_total", {
+    description: "Total number of HTTP requests"
+});
+
+const requestDuration = meter.createHistogram("http_request_duration_ms", {
+    description: "HTTP request duration in milliseconds"
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+app.use((req, res, next) => {
+    const start = Date.now();
+
+    res.on("finish", () => {
+        const duration = Date.now() - start;
+
+        requestCounter.add(1, {
+            method: req.method,
+            route: req.path,
+            status: res.statusCode
+        });
+
+        requestDuration.record(duration, {
+            method: req.method,
+            route: req.path,
+            status: res.statusCode
+        });
+
+        logger.emit({
+            severityText: "INFO",
+            body: `${req.method} ${req.path}`,
+            attributes: {
+                method: req.method,
+                route: req.path,
+                status: res.statusCode,
+                duration_ms: duration
+            }
+        });
+    });
+
+    next();
+});
 
 app.get("/", (req, res) => {
     res.json({
